@@ -1,7 +1,13 @@
 import OpenAI from "openai";
 
 // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = process.env.OPENAI_API_KEY 
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
+
+if (!process.env.OPENAI_API_KEY) {
+  console.warn('⚠️  OPENAI_API_KEY not set. AI features will be disabled for local development.');
+}
 
 export interface CommandIntent {
   action: string;
@@ -19,6 +25,16 @@ export interface QueryIntent {
 }
 
 export async function parseCommand(command: string): Promise<CommandIntent> {
+  if (!openai) {
+    console.warn('OpenAI not available, returning default command intent');
+    return {
+      action: 'unknown',
+      entity: 'unknown',
+      data: { command },
+      confidence: 0
+    };
+  }
+  
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-5",
@@ -75,6 +91,17 @@ Examples:
 }
 
 export async function parseQuery(query: string, availableData: string[]): Promise<QueryIntent> {
+  if (!openai) {
+    console.warn('OpenAI not available, returning default query intent');
+    return {
+      type: 'search',
+      entity: 'unknown',
+      filters: {},
+      query,
+      confidence: 0
+    };
+  }
+  
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-5",
@@ -133,6 +160,14 @@ Examples:
 }
 
 export async function generateResponse(userQuery: string, searchResults: any[]): Promise<string> {
+  if (!openai) {
+    console.warn('OpenAI not available, returning basic response');
+    if (searchResults.length === 0) {
+      return `No results found for "${userQuery}". AI features are disabled in development mode.`;
+    }
+    return `Found ${searchResults.length} result(s) for "${userQuery}". AI features are disabled in development mode.`;
+  }
+  
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-5",

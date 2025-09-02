@@ -9,7 +9,7 @@ import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
 if (!process.env.REPLIT_DOMAINS) {
-  throw new Error("Environment variable REPLIT_DOMAINS not provided");
+  console.warn('⚠️  REPLIT_DOMAINS not set. Authentication will be disabled for local development.');
 }
 
 const getOidcConfig = memoize(
@@ -68,6 +68,13 @@ async function upsertUser(
 
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
+  
+  // Skip authentication setup if required environment variables are missing
+  if (!process.env.REPLIT_DOMAINS || !process.env.REPL_ID || !process.env.SESSION_SECRET) {
+    console.warn('⚠️  Authentication disabled: Missing required environment variables.');
+    return;
+  }
+  
   app.use(getSession());
   app.use(passport.initialize());
   app.use(passport.session());
@@ -128,6 +135,11 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  // Skip authentication check if required environment variables are missing (development mode)
+  if (!process.env.REPLIT_DOMAINS || !process.env.REPL_ID || !process.env.SESSION_SECRET) {
+    return next();
+  }
+  
   const user = req.user as any;
 
   if (!req.isAuthenticated() || !user.expires_at) {

@@ -9,17 +9,10 @@ import Home from "@/pages/home";
 import Landing from "@/pages/landing";
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
-
+  // Authentication removed - always show main app
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
-        <>
-          <Route path="/" component={Home} />
-        </>
-      )}
+      <Route path="/" component={Home} />
       <Route component={NotFound} />
     </Switch>
   );

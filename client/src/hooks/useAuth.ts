@@ -1,14 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
-
+// Authentication removed - always return authenticated state
 export function useAuth() {
-  const { data: user, isLoading } = useQuery({
-    queryKey: ["/api/auth/user"],
-    retry: false,
-  });
+  const defaultUser = {
+    id: 'default-user',
+    name: 'User',
+    email: 'user@example.com'
+  };
 
   return {
-    user,
-    isLoading,
-    isAuthenticated: !!user,
+    user: defaultUser,
+    isLoading: false,
+    isAuthenticated: true,
   };
 }

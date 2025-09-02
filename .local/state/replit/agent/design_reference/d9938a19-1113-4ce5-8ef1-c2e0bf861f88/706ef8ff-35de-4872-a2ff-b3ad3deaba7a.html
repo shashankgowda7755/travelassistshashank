@@ -1,0 +1,759 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miles Alone - Travel OS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    popover: {
+                        DEFAULT: "var(--popover)",
+                        foreground: "var(--popover-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    destructive: {
+                        DEFAULT: "var(--destructive)",
+                        foreground: "var(--destructive-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                    success: "var(--success)",
+                    warning: "var(--warning)",
+                    info: "var(--info)",
+                },
+                fontFamily: {
+                    sans: ["Inter", "system-ui", "sans-serif"],
+                }
+            },
+        }
+    };
+    </script>
+    <style>
+        :root {
+            --background: hsl(210 20% 98%);
+            --foreground: hsl(210 20% 5%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(210 20% 5%);
+            --popover: hsl(0 0% 100%);
+            --popover-foreground: hsl(210 20% 5%);
+            --primary: hsl(210 40% 30%);
+            --primary-foreground: hsl(0 0% 98%);
+            --secondary: hsl(210 20% 95%);
+            --secondary-foreground: hsl(210 20% 20%);
+            --muted: hsl(210 20% 95%);
+            --muted-foreground: hsl(210 20% 40%);
+            --accent: hsl(210 40% 85%);
+            --accent-foreground: hsl(210 20% 20%);
+            --destructive: hsl(0 84% 60%);
+            --destructive-foreground: hsl(0 0% 98%);
+            --border: hsl(210 20% 90%);
+            --input: hsl(210 20% 95%);
+            --ring: hsl(210 40% 30%);
+            --radius: 0.75rem;
+            --success: hsl(142 76% 36%);
+            --warning: hsl(38 92% 50%);
+            --info: hsl(199 89% 48%);
+        }
+        
+        .dark {
+            --background: hsl(210 20% 8%);
+            --foreground: hsl(210 20% 95%);
+            --card: hsl(210 20% 12%);
+            --card-foreground: hsl(210 20% 95%);
+            --popover: hsl(210 20% 12%);
+            --popover-foreground: hsl(210 20% 95%);
+            --primary: hsl(210 40% 60%);
+            --primary-foreground: hsl(210 20% 8%);
+            --secondary: hsl(210 20% 15%);
+            --secondary-foreground: hsl(210 20% 80%);
+            --muted: hsl(210 20% 15%);
+            --muted-foreground: hsl(210 20% 60%);
+            --accent: hsl(210 40% 20%);
+            --accent-foreground: hsl(210 20% 80%);
+            --destructive: hsl(0 84% 60%);
+            --destructive-foreground: hsl(0 0% 98%);
+            --border: hsl(210 20% 20%);
+            --input: hsl(210 20% 15%);
+            --ring: hsl(210 40% 60%);
+            --success: hsl(142 76% 45%);
+            --warning: hsl(38 92% 60%);
+            --info: hsl(199 89% 58%);
+        }
+
+        .tab-indicator {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+        
+        .floating-action {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            z-index: 50;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-padding {
+                padding-bottom: 80px;
+            }
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-background text-foreground font-sans">
+    <!-- @COMPONENT: MainApp [contains all screens and navigation] -->
+    <div class="min-h-screen bg-background">
+        <!-- Header -->
+        <!-- @COMPONENT: Header [app title and status indicators] -->
+        <header class="bg-card border-b border-border sticky top-0 z-40">
+            <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                        <i class="fas fa-mountain text-primary-foreground text-sm"></i>
+                    </div>
+                    <h1 class="text-lg font-semibold text-foreground">Miles Alone</h1>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <!-- @STATE: isOffline:boolean = false -->
+                    <div class="flex items-center space-x-1 text-xs text-muted-foreground">
+                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span>Online</span>
+                    </div>
+                    <button class="p-2 hover:bg-secondary rounded-lg" data-event="click:toggleSettings">
+                        <i class="fas fa-cog text-muted-foreground"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+        <!-- @END_COMPONENT: Header -->
+
+        <!-- Main Content Area -->
+        <main class="max-w-md mx-auto mobile-padding" id="main-content">
+            
+            <!-- @COMPONENT: DashboardScreen [default home screen] -->
+            <div id="dashboard-screen" class="screen active">
+                <!-- Quick Actions -->
+                <section class="p-4">
+                    <h2 class="text-sm font-medium text-muted-foreground mb-3">Quick Add</h2>
+                    <div class="grid grid-cols-4 gap-3">
+                        <button class="flex flex-col items-center p-3 bg-card border border-border rounded-lg hover:bg-accent transition-colors" data-event="click:quickAddJournal">
+                            <i class="fas fa-pen text-primary mb-1"></i>
+                            <span class="text-xs font-medium">Journal</span>
+                        </button>
+                        <button class="flex flex-col items-center p-3 bg-card border border-border rounded-lg hover:bg-accent transition-colors" data-event="click:quickAddPerson">
+                            <i class="fas fa-user-plus text-primary mb-1"></i>
+                            <span class="text-xs font-medium">Person</span>
+                        </button>
+                        <button class="flex flex-col items-center p-3 bg-card border border-border rounded-lg hover:bg-accent transition-colors" data-event="click:quickAddExpense">
+                            <i class="fas fa-dollar-sign text-primary mb-1"></i>
+                            <span class="text-xs font-medium">Expense</span>
+                        </button>
+                        <button class="flex flex-col items-center p-3 bg-card border border-border rounded-lg hover:bg-accent transition-colors" data-event="click:quickAddPin">
+                            <i class="fas fa-map-pin text-primary mb-1"></i>
+                            <span class="text-xs font-medium">Pin</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Today Overview -->
+                <section class="px-4 pb-4">
+                    <h2 class="text-sm font-medium text-muted-foreground mb-3">Today's Progress</h2>
+                    
+                    <!-- Routine Progress Card -->
+                    <div class="bg-card border border-border rounded-lg p-4 mb-3">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-medium">Daily Routine</h3>
+                            <span class="text-sm text-muted-foreground" data-bind="routineCompletion">3/5</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-4 h-4 bg-green-500 rounded-sm flex items-center justify-center">
+                                    <i class="fas fa-check text-white text-xs"></i>
+                                </div>
+                                <span class="text-sm">Morning walk</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-4 h-4 bg-green-500 rounded-sm flex items-center justify-center">
+                                    <i class="fas fa-check text-white text-xs"></i>
+                                </div>
+                                <span class="text-sm">Journal writing</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-4 h-4 bg-green-500 rounded-sm flex items-center justify-center">
+                                    <i class="fas fa-check text-white text-xs"></i>
+                                </div>
+                                <span class="text-sm">Learning session</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-4 h-4 border-2 border-muted rounded-sm"></div>
+                                <span class="text-sm text-muted-foreground">Stretching</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-4 h-4 border-2 border-muted rounded-sm"></div>
+                                <span class="text-sm text-muted-foreground">Photo editing</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Water & Food Tracker -->
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div class="bg-card border border-border rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-sm">Water</h3>
+                                <i class="fas fa-tint text-blue-500"></i>
+                            </div>
+                            <div class="flex items-center space-x-1 mb-2">
+                                <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                <div class="w-3 h-3 bg-blue-200 rounded-full"></div>
+                                <div class="w-3 h-3 bg-blue-200 rounded-full"></div>
+                            </div>
+                            <p class="text-xs text-muted-foreground" data-bind="waterIntake">4/6 glasses</p>
+                        </div>
+                        
+                        <div class="bg-card border border-border rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-medium text-sm">Meals</h3>
+                                <i class="fas fa-utensils text-orange-500"></i>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                    <span class="text-xs">Breakfast ✓</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                    <span class="text-xs">Lunch ✓</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-2 h-2 bg-muted rounded-full"></div>
+                                    <span class="text-xs text-muted-foreground">Dinner</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Next Destination -->
+                    <div class="bg-card border border-border rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-medium">Next Stop</h3>
+                            <i class="fas fa-map-marker-alt text-primary"></i>
+                        </div>
+                        <p class="text-lg font-semibold" data-bind="nextDestination.name">Rishikesh, Uttarakhand</p>
+                        <p class="text-sm text-muted-foreground" data-bind="nextDestination.eta">Expected arrival: Tomorrow</p>
+                        <div class="mt-3 flex items-center justify-between">
+                            <span class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">Planned</span>
+                            <button class="text-xs text-primary hover:text-primary/80" data-event="click:viewOnMap">View on map →</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <!-- @END_COMPONENT: DashboardScreen -->
+
+            <!-- @COMPONENT: PlannerScreen [travel planning and map view] -->
+            <div id="planner-screen" class="screen hidden">
+                <div class="p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold">Travel Planner</h2>
+                        <button class="px-3 py-1 bg-primary text-primary-foreground rounded-lg text-sm" data-event="click:addNewPin">
+                            <i class="fas fa-plus mr-1"></i>Add Pin
+                        </button>
+                    </div>
+
+                    <!-- Map Placeholder -->
+                    <div class="bg-card border border-border rounded-lg mb-4 h-48 flex items-center justify-center">
+                        <div class="text-center">
+                            <i class="fas fa-map text-4xl text-muted-foreground mb-2"></i>
+                            <p class="text-sm text-muted-foreground">Interactive Map</p>
+                            <p class="text-xs text-muted-foreground">Pins and routes will display here</p>
+                        </div>
+                    </div>
+
+                    <!-- Destinations List -->
+                    <div class="space-y-3">
+                        <h3 class="font-medium text-sm text-muted-foreground">Your Destinations</h3>
+                        
+                        <!-- @MAP: destinations.map(destination => ( -->
+                        <div class="bg-card border border-border rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-medium" data-bind="destination.name">Current Location: Delhi</h4>
+                                <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Visited</span>
+                            </div>
+                            <p class="text-sm text-muted-foreground mb-2" data-bind="destination.notes">Great street food and historical sites</p>
+                            <div class="flex items-center justify-between text-xs text-muted-foreground">
+                                <span data-bind="destination.date">Jan 15, 2024</span>
+                                <button class="text-primary hover:text-primary/80" data-event="click:viewDetails">View details →</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-card border border-border rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-medium" data-bind="destination.name">Rishikesh, Uttarakhand</h4>
+                                <span class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">Planned</span>
+                            </div>
+                            <p class="text-sm text-muted-foreground mb-2" data-bind="destination.notes">Yoga capital, river rafting, spiritual vibes</p>
+                            <div class="flex items-center justify-between text-xs text-muted-foreground">
+                                <span data-bind="destination.plannedDate">Jan 20, 2024</span>
+                                <button class="text-primary hover:text-primary/80" data-event="click:viewDetails">View details →</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-card border border-border rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-medium" data-bind="destination.name">Manali, Himachal Pradesh</h4>
+                                <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">Wishlist</span>
+                            </div>
+                            <p class="text-sm text-muted-foreground mb-2" data-bind="destination.notes">Mountain views, trekking, snow activities</p>
+                            <div class="flex items-center justify-between text-xs text-muted-foreground">
+                                <span data-bind="destination.plannedDate">Maybe in March</span>
+                                <button class="text-primary hover:text-primary/80" data-event="click:viewDetails">View details →</button>
+                            </div>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: PlannerScreen -->
+
+            <!-- @COMPONENT: JournalScreen [travel diary and memories] -->
+            <div id="journal-screen" class="screen hidden">
+                <div class="p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold">Travel Journal</h2>
+                        <button class="px-3 py-1 bg-primary text-primary-foreground rounded-lg text-sm" data-event="click:addNewEntry">
+                            <i class="fas fa-plus mr-1"></i>New Entry
+                        </button>
+                    </div>
+
+                    <!-- Search Bar -->
+                    <div class="relative mb-4">
+                        <input type="text" placeholder="Search journal entries..." 
+                               class="w-full pl-10 pr-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring">
+                        <i class="fas fa-search absolute left-3 top-3 text-muted-foreground"></i>
+                    </div>
+
+                    <!-- Journal Entries -->
+                    <div class="space-y-4">
+                        <!-- @MAP: journalEntries.map(entry => ( -->
+                        <article class="bg-card border border-border rounded-lg overflow-hidden">
+                            <div class="p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex items-center space-x-2">
+                                        <i class="fas fa-map-marker-alt text-primary text-sm"></i>
+                                        <span class="text-sm font-medium" data-bind="entry.location">Red Fort, Delhi</span>
+                                    </div>
+                                    <span class="text-xs text-muted-foreground" data-bind="entry.date">Jan 15, 2024</span>
+                                </div>
+                                
+                                <!-- Journal photo showing Red Fort Delhi -->
+                                <img src="https://images.unsplash.com/photo-1587474260584-136574528ed5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=400" 
+                                     alt="Red Fort Delhi with its distinctive red sandstone walls" 
+                                     class="w-full h-32 object-cover rounded-lg mb-3">
+                                
+                                <p class="text-sm text-foreground mb-3" data-bind="entry.content">
+                                    Amazing morning exploring the Red Fort! The architecture is breathtaking and the history you can feel in every corner. Met a local guide who shared incredible stories about Mughal emperors. The early morning light made everything magical.
+                                </p>
+                                
+                                <div class="flex items-center justify-between">
+                                    <div class="flex space-x-4 text-xs text-muted-foreground">
+                                        <span><i class="fas fa-camera mr-1"></i>3 photos</span>
+                                        <span><i class="fas fa-clock mr-1"></i>5 min read</span>
+                                    </div>
+                                    <button class="text-xs text-primary hover:text-primary/80" data-event="click:readMore">Read more →</button>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="bg-card border border-border rounded-lg overflow-hidden">
+                            <div class="p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex items-center space-x-2">
+                                        <i class="fas fa-train text-primary text-sm"></i>
+                                        <span class="text-sm font-medium" data-bind="entry.location">Train to Rishikesh</span>
+                                    </div>
+                                    <span class="text-xs text-muted-foreground" data-bind="entry.date">Jan 16, 2024</span>
+                                </div>
+                                
+                                <p class="text-sm text-foreground mb-3" data-bind="entry.content">
+                                    The train journey through the countryside was incredible! Landscape changing from urban Delhi to the foothills of Himalayas. Met a family of pilgrims heading to Haridwar. They shared their lunch with me and told stories about their spiritual journey.
+                                </p>
+                                
+                                <div class="flex items-center justify-between">
+                                    <div class="flex space-x-4 text-xs text-muted-foreground">
+                                        <span><i class="fas fa-microphone mr-1"></i>Voice note</span>
+                                        <span><i class="fas fa-clock mr-1"></i>3 min read</span>
+                                    </div>
+                                    <button class="text-xs text-primary hover:text-primary/80" data-event="click:readMore">Read more →</button>
+                                </div>
+                            </div>
+                        </article>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: JournalScreen -->
+
+            <!-- @COMPONENT: PeopleScreen [contacts and connections] -->
+            <div id="people-screen" class="screen hidden">
+                <div class="p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold">People I've Met</h2>
+                        <button class="px-3 py-1 bg-primary text-primary-foreground rounded-lg text-sm" data-event="click:addNewPerson">
+                            <i class="fas fa-user-plus mr-1"></i>Add Person
+                        </button>
+                    </div>
+
+                    <!-- Search Bar -->
+                    <div class="relative mb-4">
+                        <input type="text" placeholder="Search people..." 
+                               class="w-full pl-10 pr-4 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring">
+                        <i class="fas fa-search absolute left-3 top-3 text-muted-foreground"></i>
+                    </div>
+
+                    <!-- People List -->
+                    <div class="space-y-3">
+                        <!-- @MAP: people.map(person => ( -->
+                        <div class="bg-card border border-border rounded-lg p-4">
+                            <div class="flex items-center space-x-3 mb-3">
+                                <!-- Profile photo showing a friendly local guide -->
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100" 
+                                     alt="Portrait of Rajesh, a friendly local guide" 
+                                     class="w-12 h-12 rounded-full object-cover" data-mock-image="true">
+                                <div class="flex-1">
+                                    <h3 class="font-medium" data-bind="person.name">Rajesh Kumar</h3>
+                                    <p class="text-sm text-muted-foreground" data-bind="person.description">Local guide at Red Fort</p>
+                                    <p class="text-xs text-muted-foreground" data-bind="person.location">Delhi • Jan 15, 2024</p>
+                                </div>
+                                <button class="p-2 hover:bg-secondary rounded-lg" data-event="click:callPerson">
+                                    <i class="fas fa-phone text-primary"></i>
+                                </button>
+                            </div>
+                            <p class="text-sm text-muted-foreground mb-2" data-bind="person.notes">
+                                Incredible knowledge about Mughal history. Offered to show me hidden spots in Old Delhi. WhatsApp: +91 98765-43210
+                            </p>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">Guide</span>
+                                <button class="text-xs text-primary hover:text-primary/80" data-event="click:viewContact">View details →</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-card border border-border rounded-lg p-4">
+                            <div class="flex items-center space-x-3 mb-3">
+                                <!-- Profile photo showing a young backpacker -->
+                                <img src="https://pixabay.com/get/g40f72808180afccfc65a710bafd45f919b6830164e0e8d100f70be262e4cc40eba0826fd7b08995a302d4d59bfbf6da2cafb349fff553041aec8670c1283eccb_1280.jpg" 
+                                     alt="Portrait of Sarah, a fellow backpacker" 
+                                     class="w-12 h-12 rounded-full object-cover" data-mock-image="true">
+                                <div class="flex-1">
+                                    <h3 class="font-medium" data-bind="person.name">Sarah Johnson</h3>
+                                    <p class="text-sm text-muted-foreground" data-bind="person.description">Fellow backpacker from Australia</p>
+                                    <p class="text-xs text-muted-foreground" data-bind="person.location">Paharganj • Jan 14, 2024</p>
+                                </div>
+                                <button class="p-2 hover:bg-secondary rounded-lg" data-event="click:messageWhatsApp">
+                                    <i class="fab fa-whatsapp text-green-500"></i>
+                                </button>
+                            </div>
+                            <p class="text-sm text-muted-foreground mb-2" data-bind="person.notes">
+                                Solo traveler exploring India for 3 months. Great travel tips for budget stays. Planning to visit Rishikesh too!
+                            </p>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Traveler</span>
+                                <button class="text-xs text-primary hover:text-primary/80" data-event="click:viewContact">View details →</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-card border border-border rounded-lg p-4">
+                            <div class="flex items-center space-x-3 mb-3">
+                                <!-- Profile photo showing a cafe owner -->
+                                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100" 
+                                     alt="Portrait of Amit, a local cafe owner" 
+                                     class="w-12 h-12 rounded-full object-cover" data-mock-image="true">
+                                <div class="flex-1">
+                                    <h3 class="font-medium" data-bind="person.name">Amit Sharma</h3>
+                                    <p class="text-sm text-muted-foreground" data-bind="person.description">Cafe owner in Karol Bagh</p>
+                                    <p class="text-xs text-muted-foreground" data-bind="person.location">Karol Bagh • Jan 13, 2024</p>
+                                </div>
+                                <button class="p-2 hover:bg-secondary rounded-lg" data-event="click:callPerson">
+                                    <i class="fas fa-phone text-primary"></i>
+                                </button>
+                            </div>
+                            <p class="text-sm text-muted-foreground mb-2" data-bind="person.notes">
+                                Runs 'Delhi Chai Corner'. Offered free WiFi and charging. Great recommendations for authentic North Indian food.
+                            </p>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">Local</span>
+                                <button class="text-xs text-primary hover:text-primary/80" data-event="click:viewContact">View details →</button>
+                            </div>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: PeopleScreen -->
+
+            <!-- @COMPONENT: MoreScreen [additional features and settings] -->
+            <div id="more-screen" class="screen hidden">
+                <div class="p-4">
+                    <h2 class="text-lg font-semibold mb-4">More Features</h2>
+                    
+                    <!-- Feature Grid -->
+                    <div class="grid grid-cols-2 gap-3 mb-6">
+                        <button class="flex flex-col items-center p-4 bg-card border border-border rounded-lg hover:bg-accent transition-colors" data-event="click:openPacking">
+                            <i class="fas fa-suitcase text-primary text-xl mb-2"></i>
+                            <span class="text-sm font-medium">Packing</span>
+                            <span class="text-xs text-muted-foreground">Checklist</span>
+                        </button>
+                        
+                        <button class="flex flex-col items-center p-4 bg-card border border-border rounded-lg hover:bg-accent transition-colors" data-event="click:openBudget">
+                            <i class="fas fa-chart-pie text-primary text-xl mb-2"></i>
+                            <span class="text-sm font-medium">Budget</span>
+                            <span class="text-xs text-muted-foreground">Expenses</span>
+                        </button>
+                        
+                        <button class="flex flex-col items-center p-4 bg-card border border-border rounded-lg hover:bg-accent transition-colors" data-event="click:openMaps">
+                            <i class="fas fa-map text-primary text-xl mb-2"></i>
+                            <span class="text-sm font-medium">Offline Maps</span>
+                            <span class="text-xs text-muted-foreground">Screenshots</span>
+                        </button>
+                        
+                        <button class="flex flex-col items-center p-4 bg-card border border-border rounded-lg hover:bg-accent transition-colors" data-event="click:openLearning">
+                            <i class="fas fa-graduation-cap text-primary text-xl mb-2"></i>
+                            <span class="text-sm font-medium">Learning</span>
+                            <span class="text-xs text-muted-foreground">Progress</span>
+                        </button>
+                        
+                        <button class="flex flex-col items-center p-4 bg-card border border-border rounded-lg hover:bg-accent transition-colors" data-event="click:openTransport">
+                            <i class="fas fa-bus text-primary text-xl mb-2"></i>
+                            <span class="text-sm font-medium">Transport</span>
+                            <span class="text-xs text-muted-foreground">Log</span>
+                        </button>
+                        
+                        <button class="flex flex-col items-center p-4 bg-card border border-border rounded-lg hover:bg-accent transition-colors" data-event="click:openAccommodation">
+                            <i class="fas fa-bed text-primary text-xl mb-2"></i>
+                            <span class="text-sm font-medium">Stays</span>
+                            <span class="text-xs text-muted-foreground">History</span>
+                        </button>
+                        
+                        <button class="flex flex-col items-center p-4 bg-card border border-border rounded-lg hover:bg-accent transition-colors" data-event="click:openEmergency">
+                            <i class="fas fa-first-aid text-destructive text-xl mb-2"></i>
+                            <span class="text-sm font-medium">Emergency</span>
+                            <span class="text-xs text-muted-foreground">Contacts</span>
+                        </button>
+                        
+                        <button class="flex flex-col items-center p-4 bg-card border border-border rounded-lg hover:bg-accent transition-colors" data-event="click:openWishlist">
+                            <i class="fas fa-heart text-primary text-xl mb-2"></i>
+                            <span class="text-sm font-medium">Wishlist</span>
+                            <span class="text-xs text-muted-foreground">Bucket List</span>
+                        </button>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="bg-card border border-border rounded-lg p-4 mb-4">
+                        <h3 class="font-medium mb-3">Your Journey So Far</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-primary" data-bind="stats.placesVisited">12</div>
+                                <div class="text-xs text-muted-foreground">Places Visited</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-primary" data-bind="stats.peopleMet">47</div>
+                                <div class="text-xs text-muted-foreground">People Met</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-primary" data-bind="stats.journalEntries">23</div>
+                                <div class="text-xs text-muted-foreground">Journal Entries</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-primary" data-bind="stats.totalSpent">₹15,420</div>
+                                <div class="text-xs text-muted-foreground">Total Spent</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Settings -->
+                    <div class="space-y-3">
+                        <h3 class="font-medium text-sm text-muted-foreground">Settings</h3>
+                        
+                        <button class="w-full flex items-center justify-between p-3 bg-card border border-border rounded-lg hover:bg-accent transition-colors" data-event="click:openSettings">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-cog text-muted-foreground"></i>
+                                <span class="text-sm">App Settings</span>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted-foreground text-xs"></i>
+                        </button>
+                        
+                        <button class="w-full flex items-center justify-between p-3 bg-card border border-border rounded-lg hover:bg-accent transition-colors" data-event="click:exportData">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-download text-muted-foreground"></i>
+                                <span class="text-sm">Export Data</span>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted-foreground text-xs"></i>
+                        </button>
+                        
+                        <button class="w-full flex items-center justify-between p-3 bg-card border border-border rounded-lg hover:bg-accent transition-colors" data-event="click:toggleDarkMode">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-moon text-muted-foreground"></i>
+                                <span class="text-sm">Dark Mode</span>
+                            </div>
+                            <div class="w-8 h-4 bg-muted rounded-full relative">
+                                <div class="w-4 h-4 bg-white rounded-full absolute left-0 top-0 transition-all duration-200"></div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: MoreScreen -->
+
+        </main>
+
+        <!-- Floating Action Button -->
+        <!-- @COMPONENT: FloatingActionButton [quick add functionality] -->
+        <div class="floating-action">
+            <button class="w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-all duration-200 flex items-center justify-center" data-event="click:showQuickAdd">
+                <i class="fas fa-plus text-xl"></i>
+            </button>
+        </div>
+        <!-- @END_COMPONENT: FloatingActionButton -->
+
+        <!-- Bottom Navigation -->
+        <!-- @COMPONENT: BottomNavigation [main app navigation] -->
+        <nav class="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-40">
+            <div class="max-w-md mx-auto px-4">
+                <div class="flex items-center justify-around py-2">
+                    <button class="flex flex-col items-center py-2 px-3 relative tab-btn active" data-tab="dashboard" data-event="click:switchTab">
+                        <i class="fas fa-home text-lg mb-1"></i>
+                        <span class="text-xs">Home</span>
+                        <div class="tab-indicator"></div>
+                    </button>
+                    
+                    <button class="flex flex-col items-center py-2 px-3 relative tab-btn" data-tab="planner" data-event="click:switchTab">
+                        <i class="fas fa-map text-lg mb-1 text-muted-foreground"></i>
+                        <span class="text-xs text-muted-foreground">Planner</span>
+                    </button>
+                    
+                    <button class="flex flex-col items-center py-2 px-3 relative tab-btn" data-tab="journal" data-event="click:switchTab">
+                        <i class="fas fa-book text-lg mb-1 text-muted-foreground"></i>
+                        <span class="text-xs text-muted-foreground">Journal</span>
+                    </button>
+                    
+                    <button class="flex flex-col items-center py-2 px-3 relative tab-btn" data-tab="people" data-event="click:switchTab">
+                        <i class="fas fa-users text-lg mb-1 text-muted-foreground"></i>
+                        <span class="text-xs text-muted-foreground">People</span>
+                    </button>
+                    
+                    <button class="flex flex-col items-center py-2 px-3 relative tab-btn" data-tab="more" data-event="click:switchTab">
+                        <i class="fas fa-ellipsis-h text-lg mb-1 text-muted-foreground"></i>
+                        <span class="text-xs text-muted-foreground">More</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <!-- @END_COMPONENT: BottomNavigation -->
+
+    </div>
+    <!-- @END_COMPONENT: MainApp -->
+
+    <script>
+        // Simple navigation functionality for demo
+        (function() {
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const screens = document.querySelectorAll('.screen');
+            
+            function switchTab(tabName) {
+                // Hide all screens
+                screens.forEach(screen => {
+                    screen.classList.add('hidden');
+                    screen.classList.remove('active');
+                });
+                
+                // Show target screen
+                const targetScreen = document.getElementById(`${tabName}-screen`);
+                if (targetScreen) {
+                    targetScreen.classList.remove('hidden');
+                    targetScreen.classList.add('active');
+                }
+                
+                // Update tab button states
+                tabButtons.forEach(btn => {
+                    const icon = btn.querySelector('i');
+                    const text = btn.querySelector('span');
+                    const indicator = btn.querySelector('.tab-indicator');
+                    
+                    if (btn.dataset.tab === tabName) {
+                        btn.classList.add('active');
+                        icon.classList.remove('text-muted-foreground');
+                        text.classList.remove('text-muted-foreground');
+                        if (indicator) indicator.style.display = 'block';
+                    } else {
+                        btn.classList.remove('active');
+                        icon.classList.add('text-muted-foreground');
+                        text.classList.add('text-muted-foreground');
+                        if (indicator) indicator.style.display = 'none';
+                    }
+                });
+            }
+            
+            // Add click event listeners
+            tabButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    switchTab(btn.dataset.tab);
+                });
+            });
+            
+            // Initialize with dashboard active
+            switchTab('dashboard');
+            
+            // TODO: Implement business logic for:
+            // - Data persistence with Neon PostgreSQL
+            // - Offline functionality and sync
+            // - Photo upload and storage
+            // - GPS location tracking
+            // - Search functionality
+            // - Data export features
+            // - PWA installation prompts
+            // - Push notifications for reminders
+            
+        })();
+    </script>
+</body>
+</html>

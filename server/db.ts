@@ -5,11 +5,13 @@ import * as schema from "@shared/schema";
 
 neonConfig.webSocketConstructor = ws;
 
+// Use a default local database URL for development if DATABASE_URL is not set
+const databaseUrl = process.env.DATABASE_URL || 'postgresql://localhost:5432/personal_assistant_dev';
+
 if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
+  console.warn('⚠️  DATABASE_URL not set. Using default local database URL for development.');
+  console.warn('⚠️  Database operations may fail until a proper database is configured.');
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+export const pool = new Pool({ connectionString: databaseUrl });
 export const db = drizzle({ client: pool, schema });

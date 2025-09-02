@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+// Authentication imports removed
 import { insertPinSchema, insertExpenseSchema, insertJournalSchema, insertPersonSchema, insertRoutineItemSchema, insertPackingItemSchema, insertMealLogSchema, insertWaterLogSchema } from "@shared/schema";
 import { parseCommand, parseQuery, generateResponse } from "./openai";
 import multer from "multer";
@@ -52,25 +52,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Auth middleware
-  await setupAuth(app);
+  // Authentication setup removed
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
+  // Auth routes - simplified for no-auth mode
+  app.get('/api/auth/user', async (req: any, res) => {
+    const user = {
+      id: 'default-user',
+      name: 'User',
+      email: 'user@example.com'
+    };
+    res.json(user);
   });
 
   // Natural language command processing
-  app.post('/api/command', isAuthenticated, async (req: any, res) => {
+  app.post('/api/command', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = 'default-user'; // Use default user ID since authentication is disabled
       const { command } = req.body;
       
       // Use OpenAI to parse and execute commands
@@ -83,9 +80,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI-powered query endpoint
-  app.post('/api/query', isAuthenticated, async (req: any, res) => {
+  app.post('/api/query', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = 'default-user'; // Use default user ID since authentication is disabled
       const { query } = req.body;
       
       // Parse query with OpenAI
@@ -120,9 +117,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Pins routes
-  app.get('/api/pins', isAuthenticated, async (req: any, res) => {
+  app.get('/api/pins', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = 'default-user'; // Use default user ID since authentication is disabled
       const pins = await storage.getPins(userId);
       res.json(pins);
     } catch (error) {
@@ -130,9 +127,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/pins', isAuthenticated, async (req: any, res) => {
+  app.post('/api/pins', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = 'default-user'; // Use default user ID since authentication is disabled
       const pinData = insertPinSchema.parse({ ...req.body, userId });
       const pin = await storage.createPin(pinData);
       res.json(pin);
@@ -142,9 +139,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Expenses routes
-  app.get('/api/expenses', isAuthenticated, async (req: any, res) => {
+  app.get('/api/expenses', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = 'default-user'; // Use default user ID since authentication is disabled
       const date = req.query.date as string;
       const expenses = await storage.getExpenses(userId, date);
       res.json(expenses);
@@ -153,9 +150,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/expenses', isAuthenticated, async (req: any, res) => {
+  app.post('/api/expenses', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = 'default-user'; // Use default user ID since authentication is disabled
       const expenseData = insertExpenseSchema.parse({ ...req.body, userId });
       const expense = await storage.createExpense(expenseData);
       res.json(expense);
@@ -165,9 +162,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Journal routes
-  app.get('/api/journal', isAuthenticated, async (req: any, res) => {
+  app.get('/api/journal', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = 'default-user'; // Use default user ID since authentication is disabled
       const entries = await storage.getJournalEntries(userId);
       res.json(entries);
     } catch (error) {
@@ -175,9 +172,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/journal', isAuthenticated, async (req: any, res) => {
+  app.post('/api/journal', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = 'default-user'; // Use default user ID since authentication is disabled
       const entryData = insertJournalSchema.parse({ ...req.body, userId });
       const entry = await storage.createJournalEntry(entryData);
       res.json(entry);
@@ -187,9 +184,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // People routes
-  app.get('/api/people', isAuthenticated, async (req: any, res) => {
+  app.get('/api/people', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = 'default-user'; // Use default user ID since authentication is disabled
       const query = req.query.search as string;
       
       let people;
@@ -205,9 +202,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/people', isAuthenticated, async (req: any, res) => {
+  app.post('/api/people', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = 'default-user'; // Use default user ID since authentication is disabled
       const personData = insertPersonSchema.parse({ ...req.body, userId });
       const person = await storage.createPerson(personData);
       res.json(person);
@@ -217,9 +214,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload image for a person
-  app.post('/api/people/:id/upload', isAuthenticated, upload.single('photo'), async (req: any, res) => {
+  app.post('/api/people/:id/upload', upload.single('photo'), async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = 'default-user'; // Use default user ID since authentication is disabled
       const personId = req.params.id;
       
       if (!req.file) {
@@ -243,7 +240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // General file upload endpoint
-  app.post('/api/upload', isAuthenticated, upload.single('file'), async (req: any, res) => {
+  app.post('/api/upload', upload.single('file'), async (req: any, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
@@ -265,9 +262,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Routine routes
-  app.get('/api/routine', isAuthenticated, async (req: any, res) => {
+  app.get('/api/routine', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = 'default-user'; // Use default user ID since authentication is disabled
       const items = await storage.getRoutineItems(userId);
       res.json(items);
     } catch (error) {
@@ -275,9 +272,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/routine', isAuthenticated, async (req: any, res) => {
+  app.post('/api/routine', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = 'default-user'; // Use default user ID since authentication is disabled
       const itemData = insertRoutineItemSchema.parse({ ...req.body, userId });
       const item = await storage.createRoutineItem(itemData);
       res.json(item);
@@ -286,9 +283,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/routine/:id/check', isAuthenticated, async (req: any, res) => {
+  app.post('/api/routine/:id/check', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = 'default-user'; // Use default user ID since authentication is disabled
       const routineId = req.params.id;
       const date = req.body.date || new Date().toISOString().split('T')[0];
       await storage.markRoutineDone(userId, routineId, date);
@@ -299,9 +296,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Packing routes
-  app.get('/api/packing', isAuthenticated, async (req: any, res) => {
+  app.get('/api/packing', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = 'default-user'; // Use default user ID since authentication is disabled
       const region = req.query.region as string;
       const items = await storage.getPackingItems(userId, region);
       res.json(items);
@@ -310,9 +307,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/packing', isAuthenticated, async (req: any, res) => {
+  app.post('/api/packing', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = 'default-user'; // Use default user ID since authentication is disabled
       const itemData = insertPackingItemSchema.parse({ ...req.body, userId });
       const item = await storage.createPackingItem(itemData);
       res.json(item);
@@ -321,9 +318,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/packing/:id', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/packing/:id', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = 'default-user'; // Use default user ID since authentication is disabled
       const itemId = req.params.id;
       const { packed } = req.body;
       const item = await storage.togglePackingItem(itemId, userId, packed);
@@ -334,9 +331,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Food & Water routes
-  app.post('/api/meals', isAuthenticated, async (req: any, res) => {
+  app.post('/api/meals', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = 'default-user'; // Use default user ID since authentication is disabled
       const mealData = insertMealLogSchema.parse({ ...req.body, userId });
       const meal = await storage.createMealLog(mealData);
       res.json(meal);
@@ -345,9 +342,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/water', isAuthenticated, async (req: any, res) => {
+  app.post('/api/water', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = 'default-user'; // Use default user ID since authentication is disabled
       const waterData = insertWaterLogSchema.parse({ ...req.body, userId });
       const water = await storage.createWaterLog(waterData);
       res.json(water);
@@ -357,9 +354,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Dashboard stats
-  app.get('/api/stats/today', isAuthenticated, async (req: any, res) => {
+  app.get('/api/stats/today', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = 'default-user'; // Use default user ID since authentication is disabled
       const stats = await storage.getTodayStats(userId);
       res.json(stats);
     } catch (error) {
