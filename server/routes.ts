@@ -3,8 +3,55 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertPinSchema, insertExpenseSchema, insertJournalSchema, insertPersonSchema, insertRoutineItemSchema, insertPackingItemSchema, insertMealLogSchema, insertWaterLogSchema } from "@shared/schema";
+import { parseCommand, parseQuery, generateResponse } from "./openai";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Ensure uploads directory exists
+  const uploadsDir = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  // Configure multer for file uploads
+  const storage_config = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, uploadsDir);
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+  });
+
+  const upload = multer({ 
+    storage: storage_config,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only image files are allowed'));
+      }
+    }
+  });
+
+  // Serve uploaded files
+  app.use('/uploads', (req, res, next) => {
+    // Add basic security headers
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
+    next();
+  }, (req, res, next) => {
+    const filePath = path.join(uploadsDir, req.path);
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      res.status(404).json({ message: 'File not found' });
+    }
+  });
+
   // Auth middleware
   await setupAuth(app);
 
@@ -26,12 +73,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { command } = req.body;
       
-      // Parse command using simple keyword matching (can be enhanced with OpenAI later)
+      // Use OpenAI to parse and execute commands
       const result = await parseAndExecuteCommand(command, userId);
       res.json(result);
     } catch (error) {
       console.error("Error processing command:", error);
       res.status(500).json({ message: "Failed to process command" });
+    }
+  });
+
+  // AI-powered query endpoint
+  app.post('/api/query', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { query } = req.body;
+      
+      // Parse query with OpenAI
+      const intent = await parseQuery(query, ['people', 'expenses', 'journal', 'pins']);
+      
+      let searchResults: any[] = [];
+      
+      // Execute the query based on parsed intent
+      if (intent.entity === 'people') {
+        searchResults = await executePersonQuery(userId, intent.filters);
+      } else if (intent.entity === 'expenses') {
+        searchResults = await executeExpenseQuery(userId, intent.filters);
+      } else if (intent.entity === 'journal') {
+        searchResults = await executeJournalQuery(userId, intent.filters);
+      } else if (intent.entity === 'pins') {
+        searchResults = await executePinQuery(userId, intent.filters);
+      }
+      
+      // Generate natural language response
+      const response = await generateResponse(query, searchResults);
+      
+      res.json({
+        success: true,
+        response,
+        data: searchResults,
+        intent,
+      });
+    } catch (error) {
+      console.error("Error processing query:", error);
+      res.status(500).json({ message: "Failed to process query" });
     }
   });
 
@@ -129,6 +213,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(person);
     } catch (error) {
       res.status(400).json({ message: "Invalid person data" });
+    }
+  });
+
+  // Upload image for a person
+  app.post('/api/people/:id/upload', isAuthenticated, upload.single('photo'), async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const personId = req.params.id;
+      
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const photoUrl = `/uploads/${req.file.filename}`;
+      
+      // Update the person with the photo URL
+      const updatedPerson = await storage.updatePersonPhoto(personId, userId, photoUrl);
+      
+      res.json({ 
+        success: true, 
+        photoUrl,
+        person: updatedPerson 
+      });
+    } catch (error) {
+      console.error("Error uploading person photo:", error);
+      res.status(500).json({ message: "Failed to upload photo" });
+    }
+  });
+
+  // General file upload endpoint
+  app.post('/api/upload', isAuthenticated, upload.single('file'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const fileUrl = `/uploads/${req.file.filename}`;
+      
+      res.json({ 
+        success: true, 
+        url: fileUrl,
+        filename: req.file.filename,
+        originalName: req.file.originalname,
+        size: req.file.size
+      });
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      res.status(500).json({ message: "Failed to upload file" });
     }
   });
 
@@ -239,8 +371,151 @@ export async function registerRoutes(app: Express): Promise<Server> {
   return httpServer;
 }
 
-// Simple command parser (can be enhanced with OpenAI later)
+// Query execution functions
+async function executePersonQuery(userId: string, filters: Record<string, any>) {
+  let people = await storage.getPeople(userId);
+  
+  if (filters.whereMet) {
+    people = people.filter(p => 
+      p.whereMet?.toLowerCase().includes(filters.whereMet.toLowerCase())
+    );
+  }
+  
+  if (filters.name) {
+    people = people.filter(p => 
+      p.name.toLowerCase().includes(filters.name.toLowerCase())
+    );
+  }
+  
+  return people;
+}
+
+async function executeExpenseQuery(userId: string, filters: Record<string, any>) {
+  const date = filters.date === 'today' ? new Date().toISOString().split('T')[0] : filters.date;
+  let expenses = await storage.getExpenses(userId, date);
+  
+  if (filters.category) {
+    expenses = expenses.filter(e => e.category === filters.category);
+  }
+  
+  if (filters.minAmount) {
+    expenses = expenses.filter(e => parseFloat(e.amount) >= filters.minAmount);
+  }
+  
+  return expenses;
+}
+
+async function executeJournalQuery(userId: string, filters: Record<string, any>) {
+  let entries = await storage.getJournalEntries(userId);
+  
+  if (filters.keyword) {
+    entries = entries.filter(e => 
+      e.title?.toLowerCase().includes(filters.keyword.toLowerCase()) ||
+      e.body?.toLowerCase().includes(filters.keyword.toLowerCase())
+    );
+  }
+  
+  return entries;
+}
+
+async function executePinQuery(userId: string, filters: Record<string, any>) {
+  let pins = await storage.getPins(userId);
+  
+  if (filters.status) {
+    pins = pins.filter(p => p.status === filters.status);
+  }
+  
+  if (filters.address) {
+    pins = pins.filter(p => 
+      p.address?.toLowerCase().includes(filters.address.toLowerCase()) ||
+      p.title?.toLowerCase().includes(filters.address.toLowerCase())
+    );
+  }
+  
+  return pins;
+}
+
+// OpenAI-enhanced command parser
 async function parseAndExecuteCommand(command: string, userId: string) {
+  try {
+    // First, try OpenAI parsing
+    const intent = await parseCommand(command);
+    
+    if (intent.confidence > 0.7) {
+      // Execute the parsed command
+      if (intent.action === 'add_person') {
+        const person = await storage.createPerson({
+          userId,
+          name: intent.data.name,
+          phone: intent.data.phone || null,
+          whatsapp: intent.data.whatsapp || null,
+          email: intent.data.email || null,
+          whereMet: intent.data.whereMet || null,
+          notes: intent.data.notes || null,
+        });
+        return { success: true, message: `Added ${person.name} to contacts`, data: person };
+      }
+      
+      if (intent.action === 'add_expense') {
+        const expense = await storage.createExpense({
+          userId,
+          amount: intent.data.amount,
+          category: intent.data.category || "misc",
+          note: intent.data.note || command,
+        });
+        return { success: true, message: `Logged ₹${expense.amount} expense`, data: expense };
+      }
+      
+      if (intent.action === 'add_water') {
+        const water = await storage.createWaterLog({
+          userId,
+          quantityMl: intent.data.quantityMl || 250,
+        });
+        return { success: true, message: `Logged ${water.quantityMl}ml water intake`, data: water };
+      }
+      
+      if (intent.action === 'add_meal') {
+        const mealLog = await storage.createMealLog({
+          userId,
+          meal: intent.data.meal,
+          note: intent.data.note || command,
+        });
+        return { success: true, message: `Logged ${mealLog.meal}`, data: mealLog };
+      }
+      
+      if (intent.action === 'add_journal') {
+        const entry = await storage.createJournalEntry({
+          userId,
+          title: intent.data.title || "Quick Entry",
+          body: intent.data.body || command,
+        });
+        return { success: true, message: "Added journal entry", data: entry };
+      }
+      
+      if (intent.action === 'add_pin') {
+        const pin = await storage.createPin({
+          userId,
+          title: intent.data.title,
+          address: intent.data.address || null,
+          notes: intent.data.notes || null,
+          status: intent.data.status || "planned",
+        });
+        return { success: true, message: `Added ${pin.title} to travel plans`, data: pin };
+      }
+    }
+    
+    // Fallback to regex-based parsing for backward compatibility
+    return await fallbackCommandParsing(command, userId);
+    
+  } catch (error) {
+    console.error("Error in AI command parsing:", error);
+    // Fallback to regex-based parsing
+    return await fallbackCommandParsing(command, userId);
+  }
+}
+
+// Fallback command parser using regex patterns
+async function fallbackCommandParsing(command: string, userId: string) {
   const cmd = command.toLowerCase().trim();
   
   // Add person commands

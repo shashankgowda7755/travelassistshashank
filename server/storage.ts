@@ -36,7 +36,7 @@ import {
   type InsertWaterLog,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, like, or, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
@@ -56,6 +56,7 @@ export interface IStorage {
   
   getPeople(userId: string): Promise<Person[]>;
   createPerson(person: InsertPerson): Promise<Person>;
+  updatePersonPhoto(id: string, userId: string, photoUrl: string): Promise<Person>;
   searchPeople(userId: string, query: string): Promise<Person[]>;
   
   getRoutineItems(userId: string): Promise<RoutineItem[]>;
@@ -151,6 +152,15 @@ export class DatabaseStorage implements IStorage {
   async createPerson(person: InsertPerson): Promise<Person> {
     const [newPerson] = await db.insert(people).values(person).returning();
     return newPerson;
+  }
+
+  async updatePersonPhoto(id: string, userId: string, photoUrl: string): Promise<Person> {
+    const [updatedPerson] = await db
+      .update(people)
+      .set({ photoUrl })
+      .where(and(eq(people.id, id), eq(people.userId, userId)))
+      .returning();
+    return updatedPerson;
   }
 
   async searchPeople(userId: string, query: string): Promise<Person[]> {
