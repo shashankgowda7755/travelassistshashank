@@ -4,9 +4,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import AddPersonDialog from "./dialogs/AddPersonDialog";
+import PersonDetailsDialog from "./dialogs/PersonDetailsDialog";
 
 export default function People() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [selectedPerson, setSelectedPerson] = useState<any>(null);
   
   const { data: people = [] } = useQuery({
     queryKey: ["/api/people", { search: searchQuery }],
@@ -23,11 +27,23 @@ export default function People() {
     return { text: "Local", class: "bg-purple-100 text-purple-700" };
   };
 
+  const handleCall = (person: any) => {
+    if (person.phone) {
+      window.open(`tel:${person.phone}`, '_self');
+    }
+  };
+
+  const handleWhatsApp = (person: any) => {
+    if (person.whatsapp) {
+      window.open(`https://wa.me/${person.whatsapp.replace(/[^0-9]/g, '')}`, '_blank');
+    }
+  };
   return (
-    <div className="p-4">
+    <>
+      <div className="p-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">People I've Met</h2>
-        <Button size="sm" data-testid="button-add-person">
+        <Button size="sm" onClick={() => setShowAddDialog(true)} data-testid="button-add-person">
           <i className="fas fa-user-plus mr-1"></i>Add Person
         </Button>
       </div>
@@ -84,8 +100,66 @@ export default function People() {
                         {person.whereMet} • {new Date(person.metOn).toLocaleDateString()}
                       </p>
                     </div>
-                    {person.phone && (
-                      <Button variant="ghost" size="sm" data-testid={`button-call-${person.id}`}>
+                    <div className="flex space-x-1">
+                      {person.phone && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleCall(person)}
+                          data-testid={`button-call-${person.id}`}
+                        >
+                          <i className="fas fa-phone text-primary"></i>
+                        </Button>
+                      )}
+                      {person.whatsapp && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleWhatsApp(person)}
+                          data-testid={`button-whatsapp-${person.id}`}
+                        >
+                          <i className="fab fa-whatsapp text-green-500"></i>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {person.notes && (
+                    <p className="text-sm text-muted-foreground mb-2">{person.notes}</p>
+                  )}
+                  
+                  <div className="flex items-center justify-between">
+                    <Badge className={`text-xs px-2 py-1 rounded-full ${badge.class}`}>
+                      {badge.text}
+                    </Badge>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-xs text-primary" 
+                      onClick={() => setSelectedPerson(person)}
+                      data-testid={`button-view-contact-${person.id}`}
+                    >
+                      View details →
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })
+        )}
+      </div>
+    </div>
+
+    {/* Dialogs */}
+    <AddPersonDialog open={showAddDialog} onOpenChange={setShowAddDialog} />
+    <PersonDetailsDialog 
+      person={selectedPerson} 
+      open={!!selectedPerson} 
+      onOpenChange={(open) => !open && setSelectedPerson(null)} 
+    />
+  </>
+);
+}
                         <i className="fas fa-phone text-primary"></i>
                       </Button>
                     )}

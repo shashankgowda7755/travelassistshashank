@@ -1,21 +1,32 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import AddExpenseDialog from "./dialogs/AddExpenseDialog";
+import AddPersonDialog from "./dialogs/AddPersonDialog";
+import AddJournalDialog from "./dialogs/AddJournalDialog";
+import AddPinDialog from "./dialogs/AddPinDialog";
 
 export default function Dashboard() {
+  const [showExpenseDialog, setShowExpenseDialog] = useState(false);
+  const [showPersonDialog, setShowPersonDialog] = useState(false);
+  const [showJournalDialog, setShowJournalDialog] = useState(false);
+  const [showPinDialog, setShowPinDialog] = useState(false);
+
   const { data: stats } = useQuery({
     queryKey: ["/api/stats/today"],
   });
 
   const quickActions = [
-    { icon: "fas fa-pen", label: "Journal", action: "journal" },
-    { icon: "fas fa-user-plus", label: "Person", action: "person" },
-    { icon: "fas fa-dollar-sign", label: "Expense", action: "expense" },
-    { icon: "fas fa-map-pin", label: "Pin", action: "pin" },
+    { icon: "fas fa-pen", label: "Journal", action: "journal", onClick: () => setShowJournalDialog(true) },
+    { icon: "fas fa-user-plus", label: "Person", action: "person", onClick: () => setShowPersonDialog(true) },
+    { icon: "fas fa-dollar-sign", label: "Expense", action: "expense", onClick: () => setShowExpenseDialog(true) },
+    { icon: "fas fa-map-pin", label: "Pin", action: "pin", onClick: () => setShowPinDialog(true) },
   ];
 
   return (
-    <div className="p-4 space-y-6">
+    <>
+      <div className="p-4 space-y-6">
       {/* Quick Actions */}
       <section>
         <h2 className="text-sm font-medium text-muted-foreground mb-3">Quick Add</h2>
@@ -25,6 +36,7 @@ export default function Dashboard() {
               key={action.action}
               variant="outline"
               className="flex flex-col items-center p-3 h-auto"
+              onClick={action.onClick}
               data-testid={`button-quick-${action.action}`}
             >
               <i className={`${action.icon} text-primary mb-1`}></i>
@@ -48,18 +60,20 @@ export default function Dashboard() {
               </span>
             </div>
             <div className="space-y-2">
-              {["Morning walk", "Journal writing", "Learning session", "Stretching", "Photo editing"].map((task, index) => (
+              {["Morning walk", "Journal writing", "Learning session", "Stretching", "Photo editing"].map((task, index) => {
+                const isCompleted = index < 3; // Mock completion for first 3 tasks
+                return (
                 <div key={task} className="flex items-center space-x-2">
                   <div className={`w-4 h-4 rounded-sm flex items-center justify-center ${
-                    index < 3 ? "bg-green-500" : "border-2 border-muted"
+                    isCompleted ? "bg-green-500" : "border-2 border-muted"
                   }`}>
-                    {index < 3 && <i className="fas fa-check text-white text-xs"></i>}
+                    {isCompleted && <i className="fas fa-check text-white text-xs"></i>}
                   </div>
                   <span className={`text-sm ${index < 3 ? "" : "text-muted-foreground"}`}>
                     {task}
                   </span>
                 </div>
-              ))}
+              )})}
             </div>
           </CardContent>
         </Card>
@@ -134,6 +148,13 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </section>
-    </div>
+      </div>
+
+      {/* Dialogs */}
+      <AddExpenseDialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog} />
+      <AddPersonDialog open={showPersonDialog} onOpenChange={setShowPersonDialog} />
+      <AddJournalDialog open={showJournalDialog} onOpenChange={setShowJournalDialog} />
+      <AddPinDialog open={showPinDialog} onOpenChange={setShowPinDialog} />
+    </>
   );
 }

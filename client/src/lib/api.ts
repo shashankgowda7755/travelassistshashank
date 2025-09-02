@@ -17,6 +17,11 @@ export const api = {
     const response = await apiRequest("POST", "/api/pins", pin);
     return response.json();
   },
+  
+  updatePin: async (id: string, updates: any) => {
+    const response = await apiRequest("PATCH", `/api/pins/${id}`, updates);
+    return response.json();
+  },
 
   // Expenses
   getExpenses: async (date?: string) => {

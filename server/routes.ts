@@ -330,6 +330,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update pin status
+  app.patch('/api/pins/:id', async (req: any, res) => {
+    try {
+      const userId = 'default-user'; // Use default user ID since authentication is disabled
+      const pinId = req.params.id;
+      const updates = req.body;
+      const pin = await storage.updatePin(pinId, userId, updates);
+      res.json(pin);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update pin" });
+    }
+  });
   // Food & Water routes
   app.post('/api/meals', async (req: any, res) => {
     try {

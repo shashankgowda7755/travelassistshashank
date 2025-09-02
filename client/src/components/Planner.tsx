@@ -1,9 +1,15 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import AddPinDialog from "./dialogs/AddPinDialog";
+import PinDetailsDialog from "./dialogs/PinDetailsDialog";
 
 export default function Planner() {
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [selectedPin, setSelectedPin] = useState<any>(null);
+
   const { data: pins = [] } = useQuery({
     queryKey: ["/api/pins"],
   });
@@ -18,10 +24,11 @@ export default function Planner() {
   };
 
   return (
-    <div className="p-4">
+    <>
+      <div className="p-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">Travel Planner</h2>
-        <Button size="sm" data-testid="button-add-pin">
+        <Button size="sm" onClick={() => setShowAddDialog(true)} data-testid="button-add-pin">
           <i className="fas fa-plus mr-1"></i>Add Pin
         </Button>
       </div>
@@ -33,6 +40,10 @@ export default function Planner() {
             <i className="fas fa-map text-4xl text-muted-foreground mb-2"></i>
             <p className="text-sm text-muted-foreground">Interactive Map</p>
             <p className="text-xs text-muted-foreground">Pins and routes will display here</p>
+            <Button variant="outline" size="sm" className="mt-2">
+              <i className="fas fa-external-link-alt mr-1"></i>
+              Open in Maps
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -61,6 +72,12 @@ export default function Planner() {
                     {pin.status}
                   </Badge>
                 </div>
+                {pin.address && (
+                  <p className="text-sm text-muted-foreground mb-2">
+                    <i className="fas fa-map-marker-alt mr-1"></i>
+                    {pin.address}
+                  </p>
+                )}
                 {pin.notes && (
                   <p className="text-sm text-muted-foreground mb-2">{pin.notes}</p>
                 )}
@@ -68,7 +85,13 @@ export default function Planner() {
                   <span>
                     {pin.visitedOn || pin.scheduledOn || "No date set"}
                   </span>
-                  <Button variant="ghost" size="sm" className="text-xs text-primary" data-testid={`button-view-details-${pin.id}`}>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-xs text-primary" 
+                    onClick={() => setSelectedPin(pin)}
+                    data-testid={`button-view-details-${pin.id}`}
+                  >
                     View details →
                   </Button>
                 </div>
@@ -77,6 +100,15 @@ export default function Planner() {
           ))
         )}
       </div>
-    </div>
+      </div>
+
+      {/* Dialogs */}
+      <AddPinDialog open={showAddDialog} onOpenChange={setShowAddDialog} />
+      <PinDetailsDialog 
+        pin={selectedPin} 
+        open={!!selectedPin} 
+        onOpenChange={(open) => !open && setSelectedPin(null)} 
+      />
+    </>
   );
 }
